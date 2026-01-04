@@ -1,14 +1,12 @@
 // src/App.jsx
 import React, { useState } from 'react';
-import { QRCodeCanvas } from 'qrcode.react';
+import './App.css';
 
 const App = () => {
-  const [amount, setAmount] = useState(''); // số tiền nhập
-  const [payment, setPayment] = useState({ qrCode: null, checkoutUrl: null });
+  const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handlePaymentClick = async () => {
-    // validate input
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
       alert('Vui lòng nhập số tiền hợp lệ');
       return;
@@ -17,73 +15,51 @@ const App = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('https://online-payment-qr-code.vercel.app/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: Date.now().toString(), 
-          description: `Test payment ${amount} VND`,
-          amount: Number(amount)
-        }),
-      });
-
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const res = await fetch(
+        'https://online-payment-qr-code.vercel.app/payments',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: Date.now().toString(),
+            description: `Thanh toán ${amount} VND`,
+            amount: Number(amount),
+          }),
+        }
+      );
 
       const data = await res.json();
 
       if (data.code === '00') {
-        setPayment({ qrCode: data.data.qrCode, checkoutUrl: data.data.checkoutUrl });
+        // ✅ CHUYỂN TRANG THANH TOÁN TRỰC TIẾP
+        window.location.href = data.data.checkoutUrl;
       } else {
-        alert('Tạo giao dịch thất bại: ' + data.desc);
+        alert(data.desc || 'Tạo giao dịch thất bại');
       }
-
-    } catch (err) {
-      console.error(err);
-      alert('Lỗi khi tạo giao dịch: ' + err.message);
+    } catch (error) {
+      alert('Lỗi kết nối thanh toán');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2>Nhập số tiền để thanh toán</h2>
+    <div className="container">
+      <div className="card">
+        <h1>💳 Thanh toán</h1>
+        <p className="subtitle">Nhập số tiền để thanh toán</p>
 
-      <div style={{ marginBottom: '20px' }}>
         <input
           type="number"
-          placeholder="Nhập số tiền (VND)"
+          placeholder="Số tiền (VND)"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          style={{ padding: '10px', width: '200px', marginRight: '10px' }}
         />
-        <button
-          onClick={handlePaymentClick}
-          style={{ padding: '10px 20px', cursor: 'pointer' }}
-        >
-          Thanh toán
+
+        <button onClick={handlePaymentClick} disabled={loading}>
+          {loading ? 'Đang chuyển...' : 'Thanh toán'}
         </button>
       </div>
-
-      {loading && <p>Đang tạo giao dịch...</p>}
-
-      {payment.qrCode && !loading && (
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <h3>Quét QR code để thanh toán</h3>
-          <QRCodeCanvas
-            value={payment.qrCode}
-            size={256}
-            level="H"
-            includeMargin={true}
-          />
-          <p style={{ marginTop: '10px' }}>
-            Hoặc{' '}
-            <a href={payment.checkoutUrl} target="_blank" rel="noopener noreferrer">
-              Thanh toán trực tiếp
-            </a>
-          </p>
-        </div>
-      )}
     </div>
   );
 };
