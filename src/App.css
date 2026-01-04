@@ -107,3 +107,15 @@ button:hover {
 .form-group button {
   min-width: 130px;
 }
+
+@media (max-width: 480px) {
+  .form-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-group input,
+  .form-group button {
+    width: 100%;
+  }
+}
