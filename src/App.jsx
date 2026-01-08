@@ -16,7 +16,7 @@ const App = () => {
 
     try {
       const res = await fetch(
-        'https://online-payment-qr-code.vercel.app/payments',
+        'https://payment-be.vercel.app/payments',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
